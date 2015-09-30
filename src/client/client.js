@@ -9,7 +9,6 @@ import configureStore          from '../shared/configureStore';
 import createBrowserHistory from 'history/lib/createBrowserHistory';
 import { Provider } from 'react-redux';
 
-
 logWelcome(0);
 
 const d = new Date();
