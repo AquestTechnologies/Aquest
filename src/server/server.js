@@ -3,6 +3,7 @@ import prerender from './prerender';
 import { createActivists } from './activityGenerator';
 import devConfig from '../../config/dev_server';
 import log, { logRequest, logAuthentication } from '../shared/utils/logTailor';
+import initializeDatabase from '../../db/initializeDatabase';
 
 process.env.NODE_ENV = process.env.NODE_ENV || 'development';
 log(`\nStarting server in ${process.env.NODE_ENV} mode...`);
@@ -70,6 +71,7 @@ server.ext('onRequest', (request, reply) => {
 
 // Démarrage du server
 server.start(() => {
+  initializeDatabase();
   log(`Make it rain! API server started at ${server.info.uri}`);
   log(`              ws  server started at ${server.select('ws').info.uri}`);
   console.log(

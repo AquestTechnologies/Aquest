@@ -8,25 +8,29 @@ export default function initializeDatabase() {
   return new Promise((resolve, reject) => {
     
     r.connect(dbOptions, (err, conn) => {
-      if (err) throw err;
+      if (err) return reject(err);
+      
       
       r.dbList().run(conn, (err, result) => {
-        if (err) throw err;
+        if (err) return reject(err);
         
         const { db } = dbOptions;
+        const closeConn = callback => {
+          log('+++ Database initialized');
+          conn.close(callback);
+        };
+        
         if (result.indexOf(db) === -1) {
           
           log(`+++ The database called ${db} could not be found, creating a new one`); 
           r.dbCreate(db).run(conn, (err, result) => {
-            if (err) throw err;
+            if (err) return reject(err);
             
-            createTables(conn).then(resolve, reject);
+            createTables(conn).then(() => closeConn(resolve), reject);
           });
         } 
-        else resolve();
+        else closeConn(resolve);
       });
     });
   });
 }
-
-initializeDatabase();

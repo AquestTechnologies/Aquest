@@ -4,7 +4,15 @@ Aquest Technologies © 2015
 
 *Rock'n'Roll*
 
-### En manque d'idées ?
+## A faire
+
+- [ ] Migrer vers rethinkdb
+- [ ] Appliquer les nouvelles betas
+- [ ] Contenariser sur ECS
+- [ ] Deployer en prod + integration continue
+- [ ] Ajouter de nouvelles fonctionnalités
+
+## En manque d'idées ?
 
 - [ ] Pagination
 - [ ] VALIDATIONS!!!
@@ -39,12 +47,12 @@ Aquest Technologies © 2015
 - [x] chalk --> https://github.com/sindresorhus/chalk
 - [x] Correction logTailor
 
-### Liens utiles :
+## Liens utiles :
 - [Hapi](http://hapijs.com/api)
 - [Redux](https://github.com/gaearon/redux)
 - [Emoji](http://www.emoji-cheat-sheet.com)
 
-### Convention de nommage des log :
+## Convention de nommage des log :
 | Préfixe | Signification |
 | :-----: | :------------ |
 | !!! | erreur |
@@ -59,58 +67,87 @@ Aquest Technologies © 2015
 | .C. | Composants React |
 | -C- | Action de l'utilisateur dans composants React |
 
-### Informations sur la base de données
-- Groupe administrateur : admin, Utilisateur : aquest
-- Groupe Utilisateur : users, Utilisateur : aquestuser
-- Base de données : aquestdb
+## Schemas
 
-### Créer la base de données
-- cd /home/aquest/createDB
-- psql posgres < create_aquestdb.sql  (l'idéale serai un seul fichier, j'y travaille)
-- psql aquestdb < create_tables.sql
+All schemas include a unique **id** and **createdAt** and **updatedAt** timestamps corresponding to Date.prototype.getTime, as well as a **deleted** boolean.
 
-### Visualiser les tables de la base de données
-- psql aquestdb
-- \dt aquest_schema.*
+### Users
 
-### INSTALL POSTGRESQL 9.4 AND PLV8
+| key | Type | Constraints | Unique | Mandatory |
+|-----|------|-------------|--------|-----------|
+|pseudo|string|min 1, max 15|✓|✓|
+|email|string|email|✓|✓|
+|passwordHash|string|||✓|
+|creationIp|string|ip||✓|
+|fullName|string|min 1, max 30|||
+|description|string|min 1, max 200|||
+|imageId|id||✓|✓|
 
-sudo apt-get update
-sudo touch /etc/apt/sources.list.d/pgdg.list
-echo "deb http://apt.postgresql.org/pub/repos/apt/ trusty-pgdg main" | sudo tee -a /etc/apt/sources.list.d/pgdg.list
-wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
-sudo apt-get update
-sudo apt-get install postgresql-9.4
-sudo apt-get install postgresql-9.4-plv8
-sudo useradd aquest
-sudo passwd aquest
---> <password1 here>
---> <password1 here>
-sudo mkdir /home/aquest
-sudo chown aquest /home/aquest
-sudo su postgres // sudo -u postgres psql postgres ne fonctionne pas
-psql postgres
-postgres=#CREATE ROLE aquest LOGIN PASSWORD '<password1 here>' SUPERUSER VALID UNTIL 'infinity';
-postgres=#CREATE ROLE aquestuser LOGIN PASSWORD 'aquestuser' VALID UNTIL 'infinity';
-postgres=#GRANT admin TO aquest;
-postgres=#GRANT users TO aquestuser;
-postgres=#\q
-su aquest
---> <password1 here>
-mkdir /home/createDataBase
-vi createDataBase/create_dataBase.sql # insert conf
-vi createDataBase/create_tables.sql # insert conf
-psql postres < createDataBase/create_dataBase.sql
-psql aquestdb
-postgres=#CREATE EXTENSION plv8;
-postgres=#\q
-psql postres < createDataBase/create_tables.sql
-sudo vi /etc/postgresql/9.4/main/pg_hba.conf 
---> host aquestdb aquestuser ip/32     md5
---> host all      all        0.0.0.0/0 md5
-sudo vi /etc/postgresql/9.4/main/postgresql.conf 
---> listen_addresses = '*'
-sudo /etc/init.d/postgresql restart
-psql postgres 
-postgres=#CREATE ROLE admin INHERIT;
-postgres=#CREATE ROLE users INHERIT;
+### Universes
+
+| key | Type | Constraints | Unique | Mandatory |
+|-----|------|-------------|--------|-----------|
+|handle|string|min 1, max 30|✓|✓|
+|name|string|min 1, max 30|✓|✓|
+|creationIp|string|ip||✓|
+|description|string|max 200|||
+|rules|string|max 200|||
+|userId|id|||✓|
+|imageId|id|||✓|
+|relatedUniverses|array of ids||||
+|relatedBallots|array of ids||||
+
+### Chats
+
+| key | Type | Constraints | Unique | Mandatory |
+|-----|------|-------------|--------|-----------|
+|name|string|min 1, max 30||✓|
+|chattableTable|string|||✓|
+|chattableId|id||✓|✓|
+
+### Messages
+
+| key | Type | Constraints | Unique | Mandatory |
+|-----|------|-------------|--------|-----------|
+|atom|atom|||✓|
+|chatId|id||✓|✓|
+|userId|id||✓|✓|
+
+### Topics
+
+| key | Type | Constraints | Unique | Mandatory |
+|-----|------|-------------|--------|-----------|
+|handle|string|min 1, max 30|✓|✓|
+|title|string|min 1, max 100||✓|
+|previewAtom|atom|||✓|
+|atoms|array of atoms|||✓|
+|userId|id|||✓|
+|universeId|id|||✓|
+
+### Ballots
+
+| key | Type | Constraints | Unique | Mandatory |
+|-----|------|-------------|--------|-----------|
+|content|string||✓|✓|
+|value|integer|||✓|
+|description|string|min 1, max 50|||
+
+### Votes
+
+| key | Type | Constraints | Unique | Mandatory |
+|-----|------|-------------|--------|-----------|
+|ballotId|id|||✓|
+|voterId|id|||✓|
+|voteeId|id|||✓|
+|universeId|id|||✓|
+|votableTable|string|||✓|
+|votableId|id|||✓|
+
+### Images
+
+| key | Type | Constraints | Unique | Mandatory |
+|-----|------|-------------|--------|-----------|
+|name|string|||✓|
+|url|string|url from CDN|✓|✓|
+|creationIp|string|ip||✓|
+|userId|id|||✓|

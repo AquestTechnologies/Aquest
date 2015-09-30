@@ -5,19 +5,7 @@ export default function createTables(conn) {
   
   return new Promise((resolve, reject) => {
     
-    // r.db(db)
-    // .tableCreate('users')
-    // .tableCreate('universes')
-    // .tableCreate('topics')
-    // .tableCreate('chats')
-    // .tableCreate('votes')
-    // .tableCreate('ballots')
-    // .tableCreate('images')
-    // .run(conn, (err, result) => {
-    //   err ? reject(err) : resolve(result);
-    // });
-    
-    const tables = ['users', 'universes', 'topics', 'chats', 'ballots', 'votes', 'images'];
+    const tables = ['users', 'universes', 'topics', 'chats', 'messages', 'ballots', 'votes', 'images'];
     const datas = [
       {
         table: 'users',
@@ -78,7 +66,7 @@ export default function createTables(conn) {
         
         if (!table) resolve();
         else r.tableCreate(table).run(conn, (err, result) => {
-          log(`+++ Creating table ${table}`);
+          log(`+++ Created table ${table}`);
           
           if (err) reject(err);
           else chainTableCreate(i + 1).then(resolve, reject);

@@ -1,38 +1,32 @@
-import pg from 'pg';
+import r from 'rethinkdb';
 import log from '../shared/utils/logTailor';
-import devConfig from '../../config/dev_server';
+import dbConfig from '../../config/dev_rethinkdb';
+
+let connection;
+r.connect(dbConfig, (err, conn) => {
+  if (err) throw err;
+  connection = conn;
+});
 
 export default function queryDb(intention, params) {
-  
   const d = new Date();
-  const { user, password, host, port, database } = devConfig.pg;
-  const connectionString = `postgres://${user}:${password}@${host}:${port}/${database}`;
   
-  return new Promise((resolve, reject) => {
-    
-    /**
-     * Description : Update queryDb to fit node-postgres "best practise" - Execution handle reconnexion and use polling - https://github.com/brianc/node-postgres/wiki/pg
-     * ToDo : use the pg object to create pooled clients, build our own client pool implementation or use https://github.com/grncdr/node-any-db
-     * */
-    pg.connect(connectionString, (err, client, done) => { 
-      if (err) return reject(err);
+  return !connection ? 
+    Promise.reject('!!! Not connected to database') :
+    new Promise((resolve, reject) => {
       
-      const {sql, paramaterized, callback} = buildQuery(intention, params);
+      const query = buildQuery(intention, params);
       
-      if (sql) client.query(sql, paramaterized, (err, result) => {
-        done();
+      if (query) query.run(connection, (err, result) => {
         if (err) return reject(err);
         
-        const {rowCount, rows} = result;
-        log(`+++ <-- ${intention} : `, rowCount ? `${rowCount}rows` : 'nothing', ` after ${new Date() - d}ms`);
-        resolve(typeof callback === 'function' ? callback(rows) : rows);
+        log(`+++ <-- ${intention} after ${new Date() - d}ms`);
+        resolve(result);
       });
-      else {
-        done();
-        reject(`queryDb.buildQuery did not produce any SQL, check your intention: ${intention}`);
-      }
+      
+      else reject(`queryDb.buildQuery did not yield, check your intention: ${intention}`);
+      
     });
-  });
   
   
   // Builds the SQL query and optionnal callback
@@ -44,69 +38,71 @@ export default function queryDb(intention, params) {
     // define the maximum number of message to load
     const nbrChatMessages = 30;
     
-    let sql, callback, paramaterized;
-    
     switch (intention) {
       
       
       case 'readUniverses':
         
-        sql = 
-        'SELECT ' + 
-          'id, name, description, picture, chat_id "chatId", rules ' +
-        'FROM ' + 
-          'aquest_schema.universe';
+        // sql = 
+        // 'SELECT ' + 
+        //   'id, name, description, picture, chat_id "chatId", rules ' +
+        // 'FROM ' + 
+        //   'aquest_schema.universe';
         
-        break;
+        // break;
+        
+        return r.table('universes');
         
         
       case 'readUniverse':
         
-        sql = 
-        'SELECT ' + 
-          'id, name, description, picture, chat_id "chatId" ' +
-        'FROM ' +
-          'aquest_schema.universe ' +
-        'WHERE ' +
-          'id = $1';
+        // sql = 
+        // 'SELECT ' + 
+        //   'id, name, description, picture, chat_id "chatId" ' +
+        // 'FROM ' +
+        //   'aquest_schema.universe ' +
+        // 'WHERE ' +
+        //   'id = $1';
         
-        paramaterized = [params];
-        callback = rows => rows[0] || {id: params, notFound: true};
+        // paramaterized = [params];
+        // callback = rows => rows[0] || {id: params, notFound: true};
         
-        break;
+        // break;
+        
+        return r.tables('universes').filter({ id: params });
         
         
-      case 'readUniverseWithTopics':
+      // case 'readUniverseWithTopics':
         
-        sql =
-        'SELECT ' + 
-          'aquest_schema.concat_json_object(' +
-            'to_json(universe),' +
-            `json_build_object('topics',` +
-              'array_agg(' + 
-                'json_build_object(' +
-                  `'id',topics.id,` +
-                  `'title',topics.title,` +
-                  `'universeId',topics.universe_id,` +
-                  `'author',topics.user_id,` +
-                  `'timestamp',topics.updated_at,` +
-                  `'chatId',topics.chat_id` +
-                ')' + 
-              ')' +
-            ')' +
-          ') as "UniverseWithTopics"' +   
-        'FROM (' +
-          'SELECT ' +    
-            'universe, topic.* ' +
-          'FROM' +   
-            '(SELECT universe.id, universe.name, universe.description, universe.picture, universe.chat_id "chatId" FROM aquest_schema.universe WHERE universe.id = $1) universe ' +  
-            'LEFT JOIN aquest_schema.topic ON universe.id = topic.universe_id ' +
-        ') topics GROUP BY universe';
+      //   sql =
+      //   'SELECT ' + 
+      //     'aquest_schema.concat_json_object(' +
+      //       'to_json(universe),' +
+      //       `json_build_object('topics',` +
+      //         'array_agg(' + 
+      //           'json_build_object(' +
+      //             `'id',topics.id,` +
+      //             `'title',topics.title,` +
+      //             `'universeId',topics.universe_id,` +
+      //             `'author',topics.user_id,` +
+      //             `'timestamp',topics.updated_at,` +
+      //             `'chatId',topics.chat_id` +
+      //           ')' + 
+      //         ')' +
+      //       ')' +
+      //     ') as "UniverseWithTopics"' +   
+      //   'FROM (' +
+      //     'SELECT ' +    
+      //       'universe, topic.* ' +
+      //     'FROM' +   
+      //       '(SELECT universe.id, universe.name, universe.description, universe.picture, universe.chat_id "chatId" FROM aquest_schema.universe WHERE universe.id = $1) universe ' +  
+      //       'LEFT JOIN aquest_schema.topic ON universe.id = topic.universe_id ' +
+      //   ') topics GROUP BY universe';
         
-        paramaterized = [params];
-        callback = rows => rows[0].UniverseWithTopics;
+      //   paramaterized = [params];
+      //   callback = rows => rows[0].UniverseWithTopics;
         
-        break;
+      //   break;
         
         
       case 'readChatOffset':
