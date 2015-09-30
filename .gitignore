@@ -1,0 +1,5 @@
+node_modules
+*.log*
+config/dev_local.js
+config/dev_aws.js
+temp/*

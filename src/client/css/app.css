@@ -1,0 +1,36 @@
+/*___App___*/
+
+@import url('https://fonts.googleapis.com/css?family=Roboto:400,700');
+
+@import 'normalize.css';
+@import 'variables.css';
+
+@import './components/universe.css';
+@import './components/menu.css';
+@import './components/inventory.css';
+@import './components/card.css';
+@import './components/chat.css';
+@import './components/message.css';
+@import './components/topic.css';
+@import './components/spinner.css';
+
+html {
+  font-family: 			'Roboto', sans-serif;
+  font-size:  			10px;
+  font-weight: 			400;
+  color: 						var(--black_color);
+	background-color: var(--white_color);
+}
+
+body {
+	width: 	100%;
+	height: 100%;
+	font-size: var(--base_txt);
+}
+
+div {
+  box-sizing: border-box; /*bitch please*/
+}
+
+
+

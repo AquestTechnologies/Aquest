@@ -1,0 +1,27 @@
+/*__Message__*/
+.message {
+  width: 					100%;
+  margin-bottom: 	var(--margin_w);
+}
+
+.message_body {
+  float: 				left;
+  max-width: 		calc(var(--chat_w) - 6 * var(--margin_w));
+  margin-left: 	var(--margin_w);
+}
+
+.message_author {
+  color: 				var(--grey_color);
+  line-height: 	1.7rem;
+}
+
+.message_content {
+  line-height: 2rem;
+}
+
+.message_icon {
+  color: 	var(--lightGrey_color);
+  float: 	left;
+  width: 	calc(3.6 * var(--col_w));
+  height: calc(3.6 * var(--col_w));
+}

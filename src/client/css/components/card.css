@@ -1,0 +1,84 @@
+/*___Card___*/
+.card {
+  position: 				relative; /*to use position:absolute on children*/
+  width: 						var(--card_w);
+  height: 					var(--card_h);
+  margin-bottom: 		var(--margin_w);
+  background-color: var(--white_color);
+  box-shadow: 			0.3rem 0.4rem 0.5rem 0 rgba(0, 0, 0, 0.5);
+  overflow: 				hidden;
+  cursor: 					pointer;
+}
+
+.card_title {
+  font-size: 			2.3rem;
+  letter-spacing: 0rem;
+  font-weight: 		700;
+  padding: 				var(--margin_w) var(--margin_w) 0 var(--margin_w);
+  margin-bottom: 	var(--halfMargin_w);
+}
+
+.card_author {
+  color: 					var(--grey_color);
+  font-size: 			1.4rem;
+  letter-spacing: 0.1rem;
+  padding: 0 			var(--margin_w) 0 var(--margin_w);
+  margin-bottom: 	var(--margin_w);
+}
+
+.card_description {
+  color: 					var(--darkGrey_color);
+  font-size: 			1.8rem;
+  letter-spacing: 0.1rem;
+  line-height: 		2.4rem;
+  padding: 				0 var(--margin_w) 0 var(--margin_w);
+}
+
+.card_footer {
+  position: 				absolute;
+  top: 							calc(var(--card_h) - var(--margin_w));
+  height: 					var(--margin_w);
+  width: 						100%;
+  z-index: 					10;
+  background-color: var(--white_color);
+}
+
+.card_image {
+  width: 100%;
+}
+
+.newTopicCard {
+  width: 					var(--card_w);
+  height: 				var(--card_h); 
+  color: 					var(--white_color);
+  margin-bottom: 	var(--margin_w);
+  border-width: 	0.5rem;	
+  border-style: 	dashed;
+  border-color: 	var(--white_color);
+  cursor: 				pointer;
+}
+
+.newTopicCard_title {
+  font-size: 			2.3rem;
+  letter-spacing: 0rem;
+  font-weight: 		700;
+  padding: 				var(--margin_w) var(--margin_w) 0 var(--margin_w);
+  margin-bottom: 	var(--halfMargin_w);
+}
+
+.newTopicCard_author {
+  font-size: 			1.4rem;
+  letter-spacing: 0.1rem;
+  color: 					var(--white_color);
+  margin-bottom: 	var(--margin_w);
+  padding: 				0 var(--margin_w) 0 var(--margin_w);
+}
+
+.newTopicCard_description {
+  color: 					var(--darkGrey_color);
+  font-size: 			1.8rem;
+  letter-spacing: 0.1rem;
+  line-height: 		2.4rem;
+  padding: 				0 var(--margin_w) 0 var(--margin_w);
+  color: 					var(--white_color);
+}

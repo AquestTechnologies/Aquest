@@ -1,0 +1,63 @@
+/*
+  Naming convention: j_s_t
+  j : the subject, camelCased
+  s : [optionnal] state : visible, hidden, ...
+  t : the variable type, gives info on usage and unit
+*/
+
+
+:root {
+  /*__Misc__*/
+  
+  --phi: 								1.6180339887;
+  
+  /*___Colors___*/
+  
+  --white_color:      	#fff;
+  --black_color:      	#1F1F1F; /*rgb( 31,  31,  31 );*/
+  
+  --grey_color:       	#535353; /*rgb( 83,  83,  83 );*/
+  --darkGrey_color:   	#2F2F2F; /*rgb( 47,  47,  47 );*/
+  --lightGrey_color:  	#BFBFB5; /*rgb( 191,  191,  181 );*/
+  
+  --green_color:      	#2FD359; /*rgb( 47,  211, 89 );*/
+  
+  /*___Text___*/
+  
+  --base_txt:         	1.7rem;
+  --small_txt:        	1.4rem;
+  --large_txt:        	2.3rem;
+  
+  
+  /*___Grid___*/
+  /*
+  The grid is composed of 192 columns, ie 10px per column for a 1920px screen (Full HD and WUXGA)
+  Factors of 192 are 2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64 et 96, its prime factors decomposition is (2^6)*(3^1)
+  1/192 = 0.00520833333
+  */
+  
+  --grid_col:         	192;
+  --margin_col:       	2;
+  --main_col:         	118; /* floor calc(var(--grid_col) / var(--phi));*/
+  
+  --col_w:            	1rem; /* 1rem = 10px */
+  
+  --margin_w:         	calc(var(--margin_col) * var(--col_w));
+  --doubleMargin_w:   	calc(var(--margin_w) * 2);
+  --halfMargin_w:     	calc(var(--margin_w) / 2);
+  
+  /*___Components___*/
+  
+  --main_w:           	calc(var(--main_col) * var(--col_w));
+  --chat_w:           	calc((var(--grid_col) - var(--main_col)) * var(--col_w));
+  
+  --card_w:           	calc((var(--main_w) - 2 * var(--doubleMargin_w) - var(--margin_w)) / 2);
+  --card_h:           	calc(var(--card_w) / var(--phi));
+  
+  --menu_h:     				calc(8 * var(--col_w));
+  --chatFooter_h:     	calc(8 * var(--col_w));
+  
+  --inventoryHeader_w:  calc(60 * var(--col_w));
+  --inventoryHeader_h: 	calc(14 * var(--col_w));
+
+}

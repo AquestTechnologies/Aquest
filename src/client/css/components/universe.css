@@ -1,0 +1,22 @@
+.universe_main {
+  position:         fixed;
+  width:            var(--main_w);
+  height:           100%;
+  z-index:          50;
+  
+  background-size:  cover;
+  box-shadow:       0.4rem 0 0.5rem 0 rgba(0, 0, 0, 0.5);
+  
+  overflow:         hidden;
+}
+ 
+.universe_main_scrollable {
+  width:      111%;
+  height:     100%;
+  overflow-Y: scroll;
+}
+
+.universe_main_scrolled {
+  width:   var(--main_w);
+  padding: 0 var(--doubleMargin_w) 0 var(--doubleMargin_w);
+}

@@ -1,0 +1,24 @@
+/*___Topic___*/
+
+.topic {
+  margin-top:				var(--menu_h);
+  background-color: var(--white_color);
+  padding: 					var(--margin_w);
+}
+
+.topic_title {
+	font-size: var(--large_txt);
+	font-weight: 700;
+}
+
+.topic_author {
+	margin-top: var(--margin_w);
+	color: var(--grey_color);
+}
+
+.topic_content {
+	margin-top: var(--margin_w);
+}
+
+
+
