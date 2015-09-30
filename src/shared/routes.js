@@ -9,7 +9,10 @@ import Topic       from './components/Topic';
 import NewTopic    from './components/CreateTopic';
 import NotFound    from './components/common/NotFound';
 import { Route, Redirect } from 'react-router';
+import { Provider } from 'react-redux';
+import { ReduxRouter } from 'redux-router';
 import log, { logAuthentication } from './utils/logTailor';
+
 
 export default function protectRoutes(store) {
   

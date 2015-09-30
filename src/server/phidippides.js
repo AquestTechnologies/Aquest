@@ -1,9 +1,9 @@
 import log from '../shared/utils/logTailor.js';
 import actionCreators from '../shared/actionCreators';
 
-export default function phidippides(routerState, dispatch) {
+export default function phidippides(renderProps, dispatch) {
   
-  if (!routerState) return Promise.resolve();
+  if (!renderProps) return Promise.resolve();
   
   // Configuration
   const VERBOSE      = false;            // Affiche les log
@@ -16,11 +16,13 @@ export default function phidippides(routerState, dispatch) {
   let completedTasks = {}; // Les tâches terminée
   
   // Récupère les tâches
-  const tasks = routerState.branch
-  .map   (route     => route.component.WrappedComponent || route.component)  
+  // console.log(renderProps)
+  const tasks = renderProps.components
+  .filter(component => component)
+  .map   (component => component.WrappedComponent || component)  
   .map   (component => component[METHOD_NAME]      )  // Recherche de runPhidippides dans chaque handler
   .filter(method    => typeof method === 'function')  // Filtre si c'est une fonction
-  .map   (method    => method(routerState)         )  // Appel de runPhidippides
+  .map   (method    => method(renderProps)         )  // Appel de runPhidippides
   .filter(returned  => returned instanceof Array   )  // Filtre si runPhidippides retourne un array (de tâches)
   .reduce((a, b)    => a.concat(b), []             )  // Réduction de l'array d'array de tâches en array de tâches
   .filter(task      => checkFormat(task)           ); // Évince les tâches hors format

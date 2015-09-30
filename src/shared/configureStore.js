@@ -1,17 +1,20 @@
 import reducers from './reducers';
 import log from './utils/logTailor';
 import isClient from './utils/isClient';
-import { createStore, combineReducers, applyMiddleware } from 'redux';
-import promiseMiddleware   from '../shared/middleware/promiseMiddleware';
+import { reduxReactRouter } from 'redux-router';
+import createBrowserHistory from 'history/lib/createBrowserHistory';
+import createMemoryHistory from 'history/lib/createMemoryHistory';
+import promiseMiddleware from '../shared/middleware/promiseMiddleware';
 import websocketMiddleware from '../shared/middleware/websocketMiddleware';
+import { createStore, combineReducers, applyMiddleware, compose } from 'redux';
 
 export default function configureStore(initialState) {
   
   log('... Initializing store');
   
   const storeEnhancer = isClient() ? 
-    applyMiddleware(promiseMiddleware, websocketMiddleware) :
-    applyMiddleware(promiseMiddleware);
+    compose(applyMiddleware(promiseMiddleware, websocketMiddleware)) :
+    compose(applyMiddleware(promiseMiddleware));
   
   const store = storeEnhancer(createStore)(combineReducers(reducers), initialState);
 

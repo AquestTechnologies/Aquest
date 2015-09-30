@@ -1,14 +1,15 @@
 import fs        from 'fs';
 import React     from 'react';
+import ReatDOMServer from 'react-dom/server';
 import JWT       from 'jsonwebtoken';
-import Location  from 'react-router/lib/Location';
-import Router, { Route } from 'react-router';
-import { reduxRouteComponent } from 'redux-react-router';
+import createLocation from 'history/lib/createLocation';
+import { RoutingContext, match } from 'react-router';
 import log, { logAuthentication, logError }  from '../shared/utils/logTailor';
 import phidippides    from './phidippides';
 import protectRoutes  from '../shared/routes';
 import devConfig      from '../../config/dev_server';
 import configureStore from '../shared/configureStore';
+import { Provider } from 'react-redux';
 
 const { wds: { hotFile, publicPath, filename }, jwt: { key, ttl } } = devConfig;
 const HTML = fs.readFileSync('src/server/index.html', 'utf8');
@@ -33,43 +34,44 @@ export default function prerender(request, reply) {
       }
     })) :
     Promise.resolve({}); // No cookie, no problem
-
   // First we scan the request for a cookie to renew
   checkCookie.then(reduxState => {
     
     // Then we create a new Redux store and initialize the routes with it
     const html = HTML;
     const store = configureStore(reduxState);
-    const routes = <Route children={protectRoutes(store)} component={reduxRouteComponent(store)} />;
+    const routes = protectRoutes(store);
     
     // URL processing : /foo/ --> /foo || /foo?bar=baz --> /foo || / --> /
     const requestUrl = request.url.path.split('?')[0];
     const url = requestUrl.slice(-1) === '/' && requestUrl !== '/' ? requestUrl.slice(0, -1) : requestUrl;
-    
-    Router.run(routes, new Location(url), (err, routerState, transition) => {
-      log('... Router.run');
+    const location = createLocation(url);
+    match({ routes, location }, (err, redirectLocation, renderProps) => {
+      log('... Matching routes with url');
       if (err) {
-        logError('Router.run', err);
+        logError('Router.match', err);
         response.statusCode = 500;
         return response.send();
       }
       // If routeGuard canceled a route transition (for example) then we send back a 301 (redirect)
-      if (transition.isCancelled) {
+      if (redirectLocation) {
         log('... Transition cancelled: redirecting');
-        return response.redirect(transition.redirectInfo.pathname + '?r=' + url).send();
+        return response.redirect(redirectLocation.pathname + '?r=' + url).send();
       }
       
       // Fetches initial data for components in router's branch
       log('... Entering phidippides');
       const dd = new Date();
-      phidippides(routerState, store.dispatch).then(() => {
+      phidippides(renderProps, store.dispatch).then(() => {
         log(`... Exiting phidippides (${new Date() - dd}ms)`);
         log('... Entering React.renderToString');
         
         // Renders the app (try...catch to be removed in production)
         try {
-          var mountMeImFamous = React.renderToString(
-            <Router {...routerState} children={routes} />
+          var mountMeImFamous = ReatDOMServer.renderToString(
+            <Provider store={store}>
+              <RoutingContext  {...renderProps}/>
+            </Provider>
           );
         } 
         catch(err) { logError('React.renderToString', err); }

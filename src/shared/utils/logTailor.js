@@ -96,10 +96,7 @@ export function logError(msg, error) {
   const err = error || '';
   if (err instanceof Error) {
     log('!!!', msg);
-    log('File:', err.fileName);
-    log('Line:', err.lineNumber);
-    log('Message:', err.message);
-    log('Stack:', err.stack);
+    log(err.stack);
   } 
   else log('!!!', msg, err);
 }
