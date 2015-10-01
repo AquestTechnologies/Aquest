@@ -56,7 +56,7 @@ Aquest Technologies © 2015
 ## Convention de nommage des log :
 | Préfixe | Signification |
 | :-----: | :------------ |
-| !!! | erreur |
+| !!! | erreur *(jamais comme raison d'un Promise.reject)* |
 | ... | App |
 | .A. | ActionCreators |
 | .R. | Reducers |
@@ -103,7 +103,6 @@ All schemas include a unique **id** and **createdAt** and **updatedAt** timestam
 | key | Type | Constraints | Unique | Mandatory |
 |-----|------|-------------|--------|-----------|
 |name|string|min 1, max 30||✓|
-|chattableTable|string|||✓|
 |chattableId|id||✓|✓|
 
 ### Messages
@@ -122,6 +121,7 @@ All schemas include a unique **id** and **createdAt** and **updatedAt** timestam
 |title|string|min 1, max 100||✓|
 |previewAtom|atom|||✓|
 |atoms|array of atoms|||✓|
+|creationIp|string|ip||✓|
 |userId|id|||✓|
 |universeId|id|||✓|
 
@@ -141,7 +141,6 @@ All schemas include a unique **id** and **createdAt** and **updatedAt** timestam
 |voterId|id|||✓|
 |voteeId|id|||✓|
 |universeId|id|||✓|
-|votableTable|string|||✓|
 |votableId|id|||✓|
 
 ### Images

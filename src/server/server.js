@@ -3,7 +3,8 @@ import prerender from './prerender';
 import { createActivists } from './activityGenerator';
 import devConfig from '../../config/dev_server';
 import log, { logRequest, logAuthentication } from '../shared/utils/logTailor';
-import initializeDatabase from '../../db/initializeDatabase';
+import initializeDatabase from './db/initializeDatabase';
+import importDefaults from './db/importDefaults';
 
 process.env.NODE_ENV = process.env.NODE_ENV || 'development';
 log(`\nStarting server in ${process.env.NODE_ENV} mode...`);
@@ -71,7 +72,6 @@ server.ext('onRequest', (request, reply) => {
 
 // Démarrage du server
 server.start(() => {
-  initializeDatabase();
   log(`Make it rain! API server started at ${server.info.uri}`);
   log(`              ws  server started at ${server.select('ws').info.uri}`);
   console.log(
@@ -84,10 +84,21 @@ server.start(() => {
     '          | |\n' +
     '          |_|'
   );
-  if (0) log(...server.table()[0].table.map(t => `\n${t.method} - ${t.path}`));
-  if (0) {
-    const {startActivists, stopActivists} = createActivists(30, 1000, 10000);
-    startActivists();
-    // setTimeout(stopActivists, 1000 * 60 * 2);
-  }
+  
+  initializeDatabase().then(
+    () => importDefaults().then(
+      () => {
+        log('... Server ready');
+        
+        if (0) log(...server.table()[0].table.map(t => `\n${t.method} - ${t.path}`));
+        if (0) {
+          const {startActivists, stopActivists} = createActivists(30, 1000, 10000);
+          startActivists();
+          // setTimeout(stopActivists, 1000 * 60 * 2);
+        }
+      }, 
+      err => { throw err }
+    ),
+    err => { throw err }
+  );
 });
