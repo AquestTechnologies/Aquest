@@ -4,6 +4,7 @@ import dbOptions from '../config/dev_rethinkdb';
 import createTables from './createTables';
 
 export default function initializeDatabase() {
+  log('+++ Initializing database');
   
   return new Promise((resolve, reject) => {
     

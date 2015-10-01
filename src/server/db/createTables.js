@@ -10,7 +10,7 @@ export default function createTables(conn) {
       {
         table: 'users',
         data: {
-          id: 'admin',
+          pseudo: 'admin',
           email: 'admin@aquest.tech',
           fullName: 'Super Admin',
           passwordHash: '$2a$10$m3jpaE2uelYFzoPTu/fG/eU5rTkmL0d8ph.eF3uQrdQE46UbhhpdW',
@@ -56,48 +56,65 @@ export default function createTables(conn) {
           value: -10,
         }
       },
+      {
+        table: 'ballots',
+        data: {
+          content: 'Startups',
+          value: 1,
+        }
+      },
     ];
     
-    function chainTableCreate(i = 0) {
+    function wrapTableCreate(table) {
       
       return new Promise((resolve, reject) => {
-        
-        const table = tables[i];
-        
-        if (!table) resolve();
-        else r.tableCreate(table).run(conn, (err, result) => {
+        r.tableCreate(table).run(conn, (err, result) => {
           log(`+++ Created table ${table}`);
           
-          if (err) reject(err);
-          else chainTableCreate(i + 1).then(resolve, reject);
+          err ? reject(err) : resolve();
         });
       });
     }
     
-    function chainInsert(i = 0) {
+    function wrapInsert({table, data}) {
       
       return new Promise((resolve, reject) => {
+        const d = new Date().getTime();
+        data.createdAt = d;
+        data.updatedAt = d;
+        data.deleted = false;
         
-        const toBeInserted = datas[i];
-        if (!toBeInserted) resolve();
-        else {
-          const { table, data } = toBeInserted;
-          const d = new Date().getTime();
-          data.createdAt = d;
-          data.updatedAt = d;
-          r.table(table).insert(data).run(conn, (err, result) => {
-            log(`+++ Inserted one item into table ${table}`);
-            
-            if (err) reject(err);
-            else chainInsert(i + 1).then(resolve, reject);
-          });
-        }
+        r.table(table).insert(data).run(conn, (err, result) => {
+          log(`+++ Inserted one item into table ${table}`);
+          
+          err ? reject(err) : resolve();
+        });
       });
     }
-    
-    chainTableCreate().then(() => {
-      chainInsert().then(resolve, reject);
-    }, reject);
+    PASSER PAR QUERYDB
+    Promise.all(tables.map(table => wrapTableCreate(table))).then(
+      () => Promise.all(datas.map(data => wrapInsert(data))).then(
+        () => {
+          r.table('ballots').run(conn, (err, ballotsCursor) => {
+            if (err) throw err;
+            
+            r.table('users').filter({pseudo: 'admin'}).run(conn, (err, adminUser) => {
+              if (err) throw err;
+              
+              r.table('universes').insert({
+                handle: 'Startups',
+                name: 'Startups',
+                creationIp: '0.0.0.0',
+                
+                
+              });
+            });
+          });
+        },
+        reject
+      ),
+      reject
+    );
     
   });
 }

@@ -10,6 +10,7 @@ Aquest Technologies © 2015
 - [ ] Appliquer les nouvelles betas
 - [ ] Contenariser sur ECS
 - [ ] Deployer en prod + integration continue
+- [ ] Optimiser le code actuel
 - [ ] Ajouter de nouvelles fonctionnalités
 
 ## En manque d'idées ?

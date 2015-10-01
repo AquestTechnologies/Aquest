@@ -15,13 +15,13 @@ export default function queryDb(intention, params) {
     Promise.reject('!!! Not connected to database') :
     new Promise((resolve, reject) => {
       
-      const query = buildQuery(intention, params);
+      const {query, callback} = buildQuery(intention, params);
       
       if (query) query.run(connection, (err, result) => {
         if (err) return reject(err);
         
         log(`+++ <-- ${intention} after ${new Date() - d}ms`);
-        resolve(result);
+        resolve(callback ? callback(result) : result);
       });
       
       else reject(`queryDb.buildQuery did not yield, check your intention: ${intention}`);
@@ -35,8 +35,9 @@ export default function queryDb(intention, params) {
     const {userId, universeId, title, chatId, offset, atoms, content, name, description, previewType, previewContent, pseudo, email, passwordHash, ip, picture, url} = 
       typeof params === 'object' && !Array.isArray(params) ? params : {};
       
-    // define the maximum number of message to load
+    // Define the maximum number of messages to load
     const nbrChatMessages = 30;
+    let query, callback;
     
     switch (intention) {
       
@@ -51,7 +52,10 @@ export default function queryDb(intention, params) {
         
         // break;
         
-        return r.table('universes');
+        query = r.table('universes').merge(universe => ({
+          'ballots': r.table('ballots').get_all()
+        }));
+        callback = cursor => cursor.toArray();
         
         
       case 'readUniverse':
