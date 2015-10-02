@@ -1,4 +1,4 @@
-import queryDb from '../db/queryDb';
+import queryDatabase from '../db/databaseMiddleware';
 import log, {logError} from '../../shared/utils/logTailor';
 import {randomInteger, randomText} from '../../shared/utils/randomGenerators';
 import {ip, universePicture, passwordHash, imageList, youtubeList, linkList, nameList} from './activistsConfig'; 
@@ -105,7 +105,7 @@ export class Activist {
       log('o_o logging ', pseudo);
       
       // We check if the user exists by login him/her
-      queryDb('login', { email: pseudo }).then(
+      queryDatabase('login', { email: pseudo }).then(
         result => {
           if (result) return resolve();
           
@@ -118,7 +118,7 @@ export class Activist {
             email: pseudo + '@activist.com',
           };
           
-          queryDb('createUser', createUserParams).then(resolve, reject);
+          queryDatabase('createUser', createUserParams).then(resolve, reject);
         },
         reject
       );
@@ -134,7 +134,7 @@ export class Activist {
     
     return new Promise((resolve, reject) => {
       
-      queryDb('randomRow', 'chat').then(
+      queryDatabase('randomRow', 'chat').then(
         result => {
           const params = {
             userId: this.id,
@@ -145,7 +145,7 @@ export class Activist {
             },
           };
           
-          queryDb('createMessage', params).then(resolve, reject);
+          queryDatabase('createMessage', params).then(resolve, reject);
         },
         reject
       );
@@ -154,7 +154,7 @@ export class Activist {
   
   _createUniverse() {
     
-    return queryDb('createUniverse', {
+    return queryDatabase('createUniverse', {
       ip,
       userId: this.id,
       name: randomText2(1, 3).slice(0, -1),
@@ -167,7 +167,7 @@ export class Activist {
     
     return new Promise((resolve, reject) => {
       
-      queryDb('randomRow', 'universe').then(
+      queryDatabase('randomRow', 'universe').then(
         result => {
           const atoms = [];
           
@@ -222,7 +222,7 @@ export class Activist {
             },
           };
           
-          queryDb('createTopic', params).then(resolve, reject);
+          queryDatabase('createTopic', params).then(resolve, reject);
         },
         reject
       );

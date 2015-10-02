@@ -13,14 +13,14 @@ import log from '../../../../shared/utils/logTailor';
 // And retry 'gm convert -list formats', JPEG and PNG should be there.
 
 // -- Config --
-const maxWidth = 1024;
+const maxWidth = 1200;
 
 // This plugin does not handle errors from unsupported image format (delegate not found)
 // Which is bad
-export default function processImage(fileStream) {
-  
-  return new Promise((resolve, reject) => {
-    log('Processing image...');
+export default fileStream => !fileStream.pipe ? 
+  Promise.reject('processImage - arg is not a stream') :
+  new Promise((resolve, reject) => {
+    log('... Processing image');
     
     // To identify() then write() or stream() a stream
     // gm buffers the stream in memory... https://github.com/aheckmann/gm#streams
@@ -29,13 +29,12 @@ export default function processImage(fileStream) {
     const image = gm(fileStream) // Full stream image processing!
     .identify({bufferStream: true}, (err, data) => { // Not really, it's a buffer now...
       if (err) return reject(err);
-      
       // console.log(data)
       const { format, size: { width } } = data;
       
       // Gif are cool enough to keep on being gif, any other format gets converted.
       const newFormat = format === 'GIF' ? 'gif' : 'png';
-      const name = `${uuid.v1()}.${newFormat}`;
+      const name = `${uuid.v1()}.${newFormat}`; 
       
       image
       .autoOrient() // Seems to be needed
@@ -45,9 +44,8 @@ export default function processImage(fileStream) {
         
         uploadStreamToS3(stdout, name, 'public-read').then(
           url => resolve({ url, name }),
-          err => reject(err)
+          reject
         );
       });
     });
   });
-}

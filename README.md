@@ -6,7 +6,8 @@ Aquest Technologies © 2015
 
 ## A faire
 
-- [ ] Migrer vers rethinkdb
+- [x] Migrer vers rethinkdb
+- [ ] faire tourner l'appli
 - [ ] Appliquer les nouvelles betas
 - [ ] Appliquer convention nommage fichiers
 - [ ] Contenariser sur ECS

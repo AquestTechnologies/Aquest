@@ -1,33 +1,9 @@
 import r from 'rethinkdb';
 import log from '../../shared/utils/logTailor';
 import appConfig from '../../../config/dev_app';
-import dbConfig from '../../../config/dev_rethinkdb';
-
-
-/* Connection and configuration */
-
-let connection;
-r.connect(dbConfig, (err, conn) => {
-  if (err) throw err;
-  connection = conn;
-});
-// TODO: handle deconnections
 
 const table = r.table;
 const { topicsLoadLimit, messagesLoadLimit, universesLoadLimit, defaultBallots } = appConfig;
-
-
-/* Runner to handle errors */
-
-export const run = query => new Promise((resolve, reject) => 
-  query.run(connection, (err, result) => {
-    if (err) return reject(err);
-    if (result.errors) return reject(result.first_error);
-    
-    resolve(result);
-  })
-);
-
 
 /* Shared functions among builders */
 
@@ -55,9 +31,7 @@ const prepareInsertion = obj => {
   return o;
 };
 
-const createChat = (name, chattableId) => run(
-  table('chats').insert(prepareInsertion({ name, chattableId }))
-);
+const createChat = (name, chattableId) => table('chats').insert(prepareInsertion({ name, chattableId }));
 
 const createHandleFrom = string => string.replace(/((?![a-zA-Z0-9~!_\-\.\*]).)/g, '_');
 
@@ -75,7 +49,7 @@ const normalize = cursor => {
 
 /* Builders return a Promise that resolves the data */
 
-const builders = {
+export default run => ({
   
   
   // READ USER
@@ -115,10 +89,7 @@ const builders = {
     .merge(chat => ({
       messages: addVotesTo(
         table('messages')
-        .filter({ 
-          chatId: chat('id'),
-          deleted: false
-        })
+        .filter({ chatId: chat('id') })
         .orderBy('createdAt')
         .limit(messagesLoadLimit)
       ),
@@ -150,22 +121,17 @@ const builders = {
   readTopics: ({ universeId }) => run(addVotesTo(
     
     table('topics')
-    .filter({ 
-      universeId,
-      deleted: false
-    })
+    .filter({ universeId })
     .orderBy('createdAt')
     .limit(topicsLoadLimit)
-    .without('atoms', 'creationIp', 'deleted')
+    .without('atoms', 'creationIp')
   )).then(aggregate),
 
   
   // READ TOPIC
   readTopic: ({ topicId }) => run(addVotesTo(
     
-    table('topics').get(topicId)
-    .filter({ deleted: false })
-    .without('creationIp', 'deleted')
+    table('topics').get(topicId).without('creationIp')
   )),
   
   // READ TOPIC ATOMS
@@ -195,7 +161,7 @@ const builders = {
         };
         
         Promise.all([
-          createChat(name + ' Agora', id),
+          run(createChat(name + ' Agora', id)),
           run(table('ballots').insert(prepareInsertion(newBallot)))
         ]).then(
           ([r1, r2]) => resolve({ // imageUrl is missing, delegated to client.
@@ -224,7 +190,7 @@ const builders = {
       result => {
         const id = result.generated_keys[0];
         
-        createChat(title + ' Discution', result.generated_keys[0]).then(
+        run(createChat(title + ' Discution', id)).then(
           () => resolve({
             id, userId, universeId, title, atoms, handle,
           }), 
@@ -287,21 +253,4 @@ const builders = {
   // RANDOM ROW
   randomRow: ({ table }) => run(r.table(table).orderBy(row => r.random()).limit(1))
   
-};
-
-
-const queryDb = (intention, params) => {
-  const d = new Date();
-  const runQuery = builders[intention];
-  
-  if (runQuery) {
-    const query = runQuery(params);
-    query.then(() => log(`+++ <-- ${intention} after ${new Date() - d}ms`));
-    
-    return query;
-  }
-  else return Promise.reject(`No query builder found for your intention: ${intention}`);
-  
-};
-
-export default queryDb;
+});

@@ -1,11 +1,12 @@
 import Hapi from 'hapi';
 import prerender from './prerender';
-import { createActivists } from './activityGenerator';
 import devConfig from '../../config/dev_server';
-import log, { logRequest, logAuthentication } from '../shared/utils/logTailor';
-import initializeDatabase from './db/initializeDatabase';
-import deleteDatabase from './db/deleteDatabase';
-import importDefaults from './db/importDefaults';
+import { createActivists } from './activityGenerator';
+import deleteDatabase from './db/utils/deleteDatabase';
+import importDefaults from './db/utils/importDefaults';
+import initializeDatabase from './db/utils/initializeDatabase';
+import chainPromises from '../shared/utils/chainPromises';
+import log, { logError, logRequest, logAuthentication } from '../shared/utils/logTailor';
 
 process.env.NODE_ENV = process.env.NODE_ENV || 'development';
 log(`\nStarting server in ${process.env.NODE_ENV} mode...`);
@@ -86,9 +87,10 @@ server.start(() => {
     '          |_|'
   );
   
+  // chainPromises([initializeDatabase, importDefaults]).then(
   chainPromises([deleteDatabase, initializeDatabase, importDefaults]).then(
     () => {
-      log('... Server ready!');
+      log('... App ready!');
       
       if (0) log(...server.table()[0].table.map(t => `\n${t.method} - ${t.path}`));
       if (0) {
@@ -97,21 +99,6 @@ server.start(() => {
         setTimeout(stopActivists, 1000 * 60 * 2);
       }
     },
-    err => { throw err }  
+    err => logError('App bootstrap', err)  
   );
 });
-
-// Named badly, takes an array of function returning promises,
-// And chain them passing what was resolved as the function arg
-function chainPromises(array) {
-  
-  return new Promise((resolve, reject) => {
-    
-    function recurse(i, arg) {
-      const fn = array[i];
-      fn ? fn(arg).then(recurse.bind(this, i + 1), reject) : resolve(arg);
-    }
-    
-    recurse(0);
-  });
-}

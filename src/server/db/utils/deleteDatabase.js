@@ -1,6 +1,6 @@
 import r from 'rethinkdb';
-import log from '../../shared/utils/logTailor';
-import dbOptions from '../../../config/dev_rethinkdb';
+import log from '../../../shared/utils/logTailor';
+import dbOptions from '../../../../config/dev_rethinkdb';
 
 export default function deleteDatabase() {
   
@@ -13,19 +13,16 @@ export default function deleteDatabase() {
         
         const { db } = dbOptions;
         const closeConn = callback => {
-          log('+++ Database deleted!');
           conn.close(callback);
         };
         
-        if (result.indexOf(db) !== -1) {
-          
-          log(`+++ Deleting database ${db}...`); 
-          r.dbDrop(db).run(conn, (err, result) => {
-            if (err) return reject(err);
-            
+        if (result.indexOf(db) !== -1) r.dbDrop(db).run(conn).then(
+          () => {
+            log(`+++ Deleted database ${db}`); 
             closeConn(resolve);
-          });
-        } 
+          },
+          reject
+        );
         else closeConn(resolve);
       });
     });

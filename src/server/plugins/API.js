@@ -1,7 +1,7 @@
 import Boom from 'boom';
 import bcrypt from 'bcrypt';
 import JWT from 'jsonwebtoken';
-import queryDb from '../db/queryDb.js';
+import queryDatabase from '../db/databaseMiddleware.js';
 import log, {logError} from '../../shared/utils/logTailor.js';
 import devConfig from '../../../config/dev_server';
 import actionCreators from '../../shared/actionCreators';
@@ -116,7 +116,7 @@ export default function apiPlugin(server, options, next) {
           const params = method === 'post' ? request.payload : Object.keys(request.params).length === 1 && request.params.p ? request.params.p : request.params;
           
           before(request, params).then(
-            () => queryDb(intention, params).then(
+            () => queryDatabase(intention, params).then(
               result => after(request, params, result).then(
                 token => {
                   
@@ -140,7 +140,7 @@ export default function apiPlugin(server, options, next) {
                 
                 handleError.bind(null, response, 'afterQuery')
               ),
-              err => handleError(response, 'queryDb', createReason(500, '', err))
+              err => handleError(response, 'queryDatabase', createReason(500, '', err))
             ),
             handleError.bind(null, response, 'beforeQuery')
           );
