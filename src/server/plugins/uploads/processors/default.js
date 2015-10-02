@@ -1,5 +1,5 @@
 // import log from '../../../../shared/utils/logTailor';
-import { uploadStreamToS3 } from '../../../queryS3';
+import { uploadStreamToS3 } from '../../../s3/queryS3';
 
 // The default processor for any file types
 export default function processAnyFile(fileStream) {

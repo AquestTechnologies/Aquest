@@ -8,6 +8,7 @@ Aquest Technologies © 2015
 
 - [ ] Migrer vers rethinkdb
 - [ ] Appliquer les nouvelles betas
+- [ ] Appliquer convention nommage fichiers
 - [ ] Contenariser sur ECS
 - [ ] Deployer en prod + integration continue
 - [ ] Optimiser le code actuel
@@ -70,7 +71,7 @@ Aquest Technologies © 2015
 
 ## Schemas
 
-All schemas include a unique **id** and **createdAt** and **updatedAt** timestamps corresponding to Date.prototype.getTime, as well as a **deleted** boolean.
+All schemas include a unique **id** and **createdAt** and **updatedAt** timestamps corresponding to Date.prototype.getTime.
 
 ### Users
 
@@ -132,6 +133,7 @@ All schemas include a unique **id** and **createdAt** and **updatedAt** timestam
 |content|string||✓|✓|
 |value|integer|||✓|
 |description|string|min 1, max 50|||
+|userId|id|||✓|
 
 ### Votes
 

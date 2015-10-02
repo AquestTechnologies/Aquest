@@ -1,4 +1,4 @@
-import queryDb from '../queryDb';
+import queryDb from '../db/queryDb';
 import log, {logError} from '../../shared/utils/logTailor';
 import {randomInteger, randomText} from '../../shared/utils/randomGenerators';
 import {ip, universePicture, passwordHash, imageList, youtubeList, linkList, nameList} from './activistsConfig'; 

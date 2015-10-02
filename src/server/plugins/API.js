@@ -1,7 +1,7 @@
 import Boom from 'boom';
 import bcrypt from 'bcrypt';
 import JWT from 'jsonwebtoken';
-import queryDb from '../queryDb.js';
+import queryDb from '../db/queryDb.js';
 import log, {logError} from '../../shared/utils/logTailor.js';
 import devConfig from '../../../config/dev_server';
 import actionCreators from '../../shared/actionCreators';

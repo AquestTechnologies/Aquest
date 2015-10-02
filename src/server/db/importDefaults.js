@@ -1,7 +1,7 @@
 import fs from 'fs';
 import r from 'rethinkdb';
-import log from '../../shared/utils/logger';
 import { run } from './queryDb';
+import log from '../../shared/utils/logTailor';
 import appConfig from '../../../config/dev_app.js';
 
 export default function importDefault() {

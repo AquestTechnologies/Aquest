@@ -1,7 +1,7 @@
 import gm from 'gm';
 import uuid from 'uuid';
+import { uploadStreamToS3 } from '../../../s3/queryS3';
 import log from '../../../../shared/utils/logTailor';
-import { uploadStreamToS3 } from '../../../queryS3';
 
 // To use this you must have GraphicsMagick on your local machine
 // First download and install the png (libpgn) and jpeg (jpegsrc) delegates from ftp://ftp.graphicsmagick.org/pub/GraphicsMagick/delegates/

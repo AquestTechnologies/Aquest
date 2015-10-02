@@ -4,6 +4,7 @@ import { createActivists } from './activityGenerator';
 import devConfig from '../../config/dev_server';
 import log, { logRequest, logAuthentication } from '../shared/utils/logTailor';
 import initializeDatabase from './db/initializeDatabase';
+import deleteDatabase from './db/deleteDatabase';
 import importDefaults from './db/importDefaults';
 
 process.env.NODE_ENV = process.env.NODE_ENV || 'development';
@@ -85,20 +86,32 @@ server.start(() => {
     '          |_|'
   );
   
-  initializeDatabase().then(
-    () => importDefaults().then(
-      () => {
-        log('... Server ready');
-        
-        if (0) log(...server.table()[0].table.map(t => `\n${t.method} - ${t.path}`));
-        if (0) {
-          const {startActivists, stopActivists} = createActivists(30, 1000, 10000);
-          startActivists();
-          // setTimeout(stopActivists, 1000 * 60 * 2);
-        }
-      }, 
-      err => { throw err }
-    ),
-    err => { throw err }
+  chainPromises([deleteDatabase, initializeDatabase, importDefaults]).then(
+    () => {
+      log('... Server ready!');
+      
+      if (0) log(...server.table()[0].table.map(t => `\n${t.method} - ${t.path}`));
+      if (0) {
+        const {startActivists, stopActivists} = createActivists(30, 1000, 10000);
+        startActivists();
+        setTimeout(stopActivists, 1000 * 60 * 2);
+      }
+    },
+    err => { throw err }  
   );
 });
+
+// Named badly, takes an array of function returning promises,
+// And chain them passing what was resolved as the function arg
+function chainPromises(array) {
+  
+  return new Promise((resolve, reject) => {
+    
+    function recurse(i, arg) {
+      const fn = array[i];
+      fn ? fn(arg).then(recurse.bind(this, i + 1), reject) : resolve(arg);
+    }
+    
+    recurse(0);
+  });
+}

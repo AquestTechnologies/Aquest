@@ -1,5 +1,5 @@
 import AWS from 'aws-sdk';
-import { accessKeyId, secretAccessKey, imageBucketName, cloudFrontDomainName } from '../../config/dev_aws';
+import { accessKeyId, secretAccessKey, imageBucketName, cloudFrontDomainName } from '../../../config/dev_aws';
 
 
 // This is sooooo unsecure, before prod we need to use something more recommended

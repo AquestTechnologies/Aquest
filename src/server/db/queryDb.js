@@ -1,7 +1,7 @@
 import r from 'rethinkdb';
-import log from '../shared/utils/logTailor';
-import appConfig from '../../config/dev_app';
-import dbConfig from '../../config/dev_rethinkdb';
+import log from '../../shared/utils/logTailor';
+import appConfig from '../../../config/dev_app';
+import dbConfig from '../../../config/dev_rethinkdb';
 
 
 /* Connection and configuration */
@@ -31,32 +31,37 @@ export const run = query => new Promise((resolve, reject) =>
 
 /* Shared functions among builders */
 
-const filterDeleted = q => q.filter({ deleted: false }).without('deleted');
-
 const prepareUniverse = q => q.merge(universe => ({
   ballots: table('ballots').getAll(r.args(universe('relatedBallots'))).coerceTo('array'),
   imageUrl: table('images').get(r.args(universe('imageId')))('url')
-})).without('deleted', 'imageId', 'userId', 'creationIp', 'createdAt', 'updatedAt');
+})).without('imageId', 'userId', 'creationIp', 'createdAt', 'updatedAt');
 
 const addVotesTo = q => q.merge(votable => ({
   votes: table('votes').filter({ votableId: votable('id')})
 }));
 
-const addCommonFlags = obj => {
+// Adds timestamps and replaces undefined with null
+const prepareInsertion = obj => {
   const d = new Date().getTime();
-  
-  return Object.assign({
+  const o = Object.assign({
     createdAt: d,
     updatedAt: d,
-    deleted: false,
   }, obj);
+  
+  Object.keys(o).forEach(key => {
+    if (o.hasOwnProperty(key) && o[key] === undefined) o[key] = null;
+  });
+  
+  return o;
 };
 
-const createChat = (name, chattableId) => run(table('chats').insert(addCommonFlags({
-  name, chattableId
-})));
+const createChat = (name, chattableId) => run(
+  table('chats').insert(prepareInsertion({ name, chattableId }))
+);
 
-const cursorToArray = cursor => cursor.toArray();
+const createHandleFrom = string => string.replace(/((?![a-zA-Z0-9~!_\-\.\*]).)/g, '_');
+
+const aggregate = cursor => cursor.toArray();
 
 const normalize = cursor => {  
   const obj = {};
@@ -77,29 +82,27 @@ const builders = {
   readUser: ({ emailOrPseudo }) => run(
     
     table('users')
-    .filter(user => r.and(r.or(user('email').eq(emailOrPseudo), user('pseudo').eq(emailOrPseudo)), user('deleted').eq(false)))
+    .filter(user => r.or(user('email').eq(emailOrPseudo), user('pseudo').eq(emailOrPseudo)))
     .limit(1)
     .merge(user => ({
       imageUrl: table('images').get(r.args(user('imageId')))('url'),
     }))
-    .without('deleted', 'creationIp', 'imageId')
+    .without('creationIp', 'imageId')
   ),
   
   // READ UNIVERSES
   readUniverses: () => run(prepareUniverse(
     
     table('universes')
-    .filter({ deleted: false })
     .limit(universesLoadLimit)
-  ))
-  .then(normalize),
+  )).then(normalize),
   
-    
+  
   // READ UNIVERSE BY HANDLE
   readUniverseByHandle: ({ handle }) => run(prepareUniverse(
     
     table('universes')
-    .filter({ handle, deleted: false })
+    .filter({ handle })
     .limit(1)
   )),
   
@@ -108,7 +111,7 @@ const builders = {
   readChats: ({ chattableId }) => run(
     
     table('chats')
-    .filter({ chattableId, deleted: false })
+    .filter({ chattableId })
     .merge(chat => ({
       messages: addVotesTo(
         table('messages')
@@ -120,9 +123,8 @@ const builders = {
         .limit(messagesLoadLimit)
       ),
     }))
-    .without('deleted', 'updatedAt')
-  )
-  .then(normalize),
+    .without('updatedAt')
+  ).then(normalize),
     
   
   // READ MESSAGES
@@ -131,11 +133,11 @@ const builders = {
     const x = table('messages').filter({ chatId }).orderBy('createdAt');
     const i = x.offsetsOf(lastMessageId);
     
-    return run(addVotesTo(filterDeleted(x.slice(i, i + messagesLoadLimit))))
-      .then(cursorToArray);
+    return run(addVotesTo(
+      x.slice(i, i + messagesLoadLimit)
+    )).then(aggregate);
       
     // Which is better ?
-    // query: addVotesTo(
       // x
       // // .skip(x.offsetsOf(r.row('id').eq(lastMessageId)))
       // .skip(x.offsetsOf(lastMessageId))
@@ -155,8 +157,7 @@ const builders = {
     .orderBy('createdAt')
     .limit(topicsLoadLimit)
     .without('atoms', 'creationIp', 'deleted')
-  ))
-  .then(cursorToArray),
+  )).then(aggregate),
 
   
   // READ TOPIC
@@ -174,105 +175,130 @@ const builders = {
   ),
   
   
-  // CREATE USER
-  createUser: ({ pictureId, pseudo, email, passwordHash, creationIp }) => run(
-    
-    table('users').insert(addCommonFlags({
-      pseudo, email, passwordHash, creationIp, pictureId, 
-    })))
-    .then(result => ({
-      pseudo, email, pictureId, 
-      id: result.generated_keys[0],
-    })),
-  
-  
   // CREATE UNIVERSE
   createUniverse: ({ userId, imageId, name, description, rules, relatedUniverses, creationIp }) => new Promise((resolve, reject) => {
     
-    const handle = 'yolo';
-    
     run(
       table('universes')
-      .insert(addCommonFlags({ 
-        userId, imageId, handle, name, description, rules, relatedUniverses, creationIp,
+      .insert(prepareInsertion({ 
+        userId, imageId, name, description, rules, relatedUniverses, creationIp,
+        handle: createHandleFrom(name),
       }))
     ).then(
       result => {
         const id = result.generated_keys[0];
-        const newBallot = { content: name, value: 1 };
+        const newBallot = { 
+          userId,
+          value: 1,
+          content: name,
+          description: 'Accurate', // ?
+        };
         
         Promise.all([
           createChat(name + ' Agora', id),
-          run(
-            table('ballots')
-            .insert(addCommonFlags(newBallot))  
-          ).then(result => result.generated_keys[0])
-        ])
-        .then(
-          ([chatResult, ballotResult]) => resolve({ 
+          run(table('ballots').insert(prepareInsertion(newBallot)))
+        ]).then(
+          ([r1, r2]) => resolve({ // imageUrl is missing, delegated to client.
             id, name, description, rules, relatedUniverses, 
-            ballots: Object.assign({}, defaultBallots, Object.assign(newBallot, { 
-              id: ballotResult.generated_keys[0]
-            }))
-            
-          }), // imageUrl is missing, delegated to client.
+            ballots: defaultBallots.concat([Object.assign(newBallot, { 
+              id: r2.generated_keys[0]
+            })]) 
+          }), 
           reject 
         );
       },
       reject
     );
-      
-      
-    
   }),
+  
+  
+  // CREATE TOPIC
+  createTopic: ({ userId, universeId, title, atoms, creationIp }) => new Promise((resolve, reject) => {
+    const handle = createHandleFrom(title);
+    
+    run(
+      table('topics').insert(prepareInsertion({
+        userId, universeId, title, atoms, creationIp, handle,
+      }))
+    ).then(
+      result => {
+        const id = result.generated_keys[0];
+        
+        createChat(title + ' Discution', result.generated_keys[0]).then(
+          () => resolve({
+            id, userId, universeId, title, atoms, handle,
+          }), 
+          reject
+        );
+      },
+      reject
+    );
+  }),
+  
+  
+  // CREATE USER
+  createUser: ({ pictureId, pseudo, email, passwordHash, creationIp }) => run(
+    
+    table('users').insert(prepareInsertion({
+      pseudo, email, passwordHash, creationIp, pictureId, 
+    }))
+  ).then(result => ({
+    pseudo, email, pictureId, 
+    id: result.generated_keys[0],
+  })),
   
   
   // CREATE MESSAGE
-  createMessage: ({ userId, chatId, atom }) => ({
+  createMessage: ({ userId, chatId, atom }) => run(
     
-    query: table('messages').insert(addCommonFlags({
+    table('messages').insert(prepareInsertion({
       userId, chatId, atom,
-    })),
-    
-    callback: result => ({
-      userId, chatId, atom,
-      id: result.generated_keys[0],
-    })
-  }),
+    }))
+  ).then(result => ({
+    userId, chatId, atom,
+    id: result.generated_keys[0]
+  })),
   
   
   // CREATE IMAGE
-  createImage: ({ userId, name, url, creationIp }) => ({
+  createImage: ({ userId, name, url, creationIp }) => run(
     
-    query: table('images').insert(addCommonFlags({
+    table('images').insert(prepareInsertion({
       userId, name, url, creationIp,
-    })),
-    
-    callback: result => ({
-      name, url,
-      id: result.generated_keys[0],
-    })
-  }),
+    }))
+  ).then(result => ({
+    name, url,
+    id: result.generated_keys[0]
+  })),
+  
+  
+  // CREATE BALLOT
+  createBallot: ({ userId, content, value, description }) => run(
+  
+    table('ballots').insert(prepareInsertion({
+      userId, content, value, description
+    }))
+  ).then(result => ({
+    userId, content, value, description,
+    id: result.generated_keys[0]
+  })),
   
   
   // RANDOM ROW
-  randomRow: ({ table }) => ({
-    
-    query: r.table(table).orderBy(row => r.random()).limit(1),
-  })
+  randomRow: ({ table }) => run(r.table(table).orderBy(row => r.random()).limit(1))
   
 };
 
 
 const queryDb = (intention, params) => {
   const d = new Date();
-  const builder = builders[intention];
+  const runQuery = builders[intention];
   
-  if (builder) {
-    const x = builder(params);
-    x.then(() => log(`+++ <-- ${intention} after ${new Date() - d}ms`));
+  if (runQuery) {
+    const query = runQuery(params);
+    query.then(() => log(`+++ <-- ${intention} after ${new Date() - d}ms`));
     
-    return x;
+    return query;
   }
   else return Promise.reject(`No query builder found for your intention: ${intention}`);
   

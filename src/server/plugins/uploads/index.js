@@ -1,7 +1,7 @@
 import Joi from 'joi';
 import Boom from 'boom';
 import JWT from 'jsonwebtoken';
-import queryDb from '../../queryDb';
+import queryDb from '../../db/queryDb';
 import log, {logError} from '../../../shared/utils/logTailor';
 
 

@@ -1,13 +1,10 @@
 import r from 'rethinkdb';
-import createTables from './createTables';
 import log from '../../shared/utils/logTailor';
 import dbOptions from '../../../config/dev_rethinkdb';
 
-export default function initializeDatabase() {
-  log('+++ Initializing database...');
+export default function deleteDatabase() {
   
   return new Promise((resolve, reject) => {
-    
     r.connect(dbOptions, (err, conn) => {
       if (err) return reject(err);
       
@@ -16,17 +13,17 @@ export default function initializeDatabase() {
         
         const { db } = dbOptions;
         const closeConn = callback => {
-          log('+++ Database initialized!');
+          log('+++ Database deleted!');
           conn.close(callback);
         };
         
-        if (result.indexOf(db) === -1) {
+        if (result.indexOf(db) !== -1) {
           
-          log(`+++ Database ${db} could not be found, creating a new one...`); 
-          r.dbCreate(db).run(conn, (err, result) => {
+          log(`+++ Deleting database ${db}...`); 
+          r.dbDrop(db).run(conn, (err, result) => {
             if (err) return reject(err);
             
-            createTables(conn).then(() => closeConn(resolve), reject);
+            closeConn(resolve);
           });
         } 
         else closeConn(resolve);
