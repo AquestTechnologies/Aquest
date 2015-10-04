@@ -1,6 +1,6 @@
 export default {
-  wsPort: 9090,
-  apiPort: 8080,
-  wdsPort: 3000,
+  apiPort: 81,
+  wsPort: 82,
+  wdsPort: 83,
   localIP: 'your.ip.here',
 };

@@ -8,7 +8,7 @@ RUN apt-get update && apt-get install -y \
     python gcc g++ make pkg-config build-essential \
     curl wget git supervisor \
     protobuf-compiler libprotobuf-dev libcurl4-openssl-dev \
-    libboost-all-dev libncurses5-dev libjemalloc-dev m4 \
+    libboost-all-dev libncurses5-dev libjemalloc-dev m4
 
 RUN rm -rf /var/lib/apt/lists/* \
 &&  sed -i 's/^\(\[supervisord\]\)$/\1\nnodaemon=true/' /etc/supervisor/supervisord.conf \
@@ -39,6 +39,6 @@ RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 ADD ./rethinkdb.conf /etc/supervisor/conf.d/
 ADD ./cloud9.conf /etc/supervisor/conf.d/
 
-EXPOSE 80 3000 8080 9090
+EXPOSE 80 81 82 83 8080 29015 28015
 
 CMD ["supervisord", "-c", "/etc/supervisor/supervisord.conf"]
