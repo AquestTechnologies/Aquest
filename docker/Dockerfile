@@ -1,35 +1,44 @@
 FROM ubuntu
 
-RUN echo "Rock'n'Roll"
-
 RUN mkdir /tmp/deploy
 
 WORKDIR /tmp/deploy
 
-RUN apt-get update && apt-get install -y git wget python gcc g++ make
+RUN apt-get update && apt-get install -y \
+    python gcc g++ make pkg-config build-essential \
+    curl wget git supervisor \
+    protobuf-compiler libprotobuf-dev libcurl4-openssl-dev \
+    libboost-all-dev libncurses5-dev libjemalloc-dev m4 \
 
-RUN wget http://zlib.net/zlib-1.2.8.tar.gz
-RUN wget https://nodejs.org/dist/v4.1.1/node-v4.1.1.tar.gz
-RUN wget ftp://ftp.graphicsmagick.org/pub/GraphicsMagick/GraphicsMagick-LATEST.tar.gz
-RUN wget ftp://ftp.graphicsmagick.org/pub/GraphicsMagick/delegates/jpegsrc.v9a.tar.gz
-RUN wget ftp://ftp.graphicsmagick.org/pub/GraphicsMagick/delegates/libpng-1.6.18.tar.gz
+RUN rm -rf /var/lib/apt/lists/* \
+&&  sed -i 's/^\(\[supervisord\]\)$/\1\nnodaemon=true/' /etc/supervisor/supervisord.conf \
+&&  update-rc.d supervisor defaults
 
-RUN tar -xvf zlib-1.2.8.tar.gz
-RUN tar -xvf node-v4.1.1.tar.gz 
-RUN tar -xvf jpegsrc.v9a.tar.gz
-RUN tar -xvf libpng-1.6.18.tar.gz
-RUN tar -xvf GraphicsMagick-LATEST.tar.gz
+RUN wget https://nodejs.org/dist/v4.1.1/node-v4.1.1.tar.gz \
+&&  tar -xvf node-v4.1.1.tar.gz 
 
-RUN cd node-v4.1.1/ && ./configure && make && sudo make install
-RUN cd zlib-* && ./configure && make && sudo make install
-RUN cd jpeg-* && ./configure && make && sudo make install
-RUN cd libpng-* && ./configure && make && sudo make install
-RUN cd GraphicsMagick-* && ./configure && make && sudo make install
+RUN cd node-v4.1.1/ && ./configure && make && make install
 
-RUN sudo ranlib /usr/local/lib/libjpeg.a && sudo ldconfig /usr/local/lib
+RUN curl -s https://raw.githubusercontent.com/lovell/sharp/master/preinstall.sh | bash -
 
-RUN mkdir /srv/aquest && git clone https://github.com/AquestTechnologies/Aquest.git /srv/aquest
+RUN wget http://download.rethinkdb.com/dist/rethinkdb-2.1.4.tgz \
+&&  tar xf rethinkdb-2.1.4.tgz \
+&&  cd rethinkdb-2.1.4/ && ./configure --allow-fetch && make && make install
 
-WORKDIR /srv/aquest
+WORKDIR /root
 
-RUN npm i && npm i -g nodemon babel
+RUN git clone https://github.com/c9/core.git ./cloud9 \
+&&  cloud9/scripts/install-sdk.sh \
+&&  sed -i -e 's_127.0.0.1_0.0.0.0_g' cloud9/configs/standalone.js
+
+RUN git clone https://github.com/AquestTechnologies/Aquest.git ./aquest \
+&&  cd aquest/ && npm i && npm i -g nodemon babel
+
+RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+ADD ./rethinkdb.conf /etc/supervisor/conf.d/
+ADD ./cloud9.conf /etc/supervisor/conf.d/
+
+EXPOSE 80 3000 8080 9090
+
+CMD ["supervisord", "-c", "/etc/supervisor/supervisord.conf"]
