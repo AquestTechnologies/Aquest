@@ -40,7 +40,6 @@
     "validate.js": "^0.8.0"
   },
   "devDependencies": {
-    "babel-eslint": "^3.1.23",
     "babel-loader": "^5.1.4",
     "css-loader": "^0.14.5",
     "cssnext-loader": "^1.0.1",
