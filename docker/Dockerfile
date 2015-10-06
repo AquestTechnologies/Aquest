@@ -39,6 +39,7 @@ WORKDIR /root
 
 RUN git clone https://github.com/c9/core.git ./cloud9 \
 &&  cd cloud9/ && scripts/install-sdk.sh \
+&&  npm i \
 &&  sed -i -e 's_127.0.0.1_0.0.0.0_g' configs/standalone.js
 
 RUN git clone https://github.com/AquestTechnologies/Aquest.git ./aquest \
