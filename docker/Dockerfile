@@ -3,8 +3,11 @@ FROM ubuntu:14.04
 WORKDIR /tmp
 
 RUN apt-get update && apt-get install -y \
-    python gcc g++ make \
-    curl wget git supervisor
+    python gcc g++ make curl wget git supervisor \
+    build-essential protobuf-compiler \
+    libprotobuf-dev libcurl4-openssl-dev \
+    libboost-all-dev libncurses5-dev \
+    libjemalloc-dev m4
 
 RUN rm -rf /var/lib/apt/lists/* \
 &&  sed -i 's/^\(\[supervisord\]\)$/\1\nnodaemon=true/' /etc/supervisor/supervisord.conf \
@@ -39,7 +42,6 @@ WORKDIR /root
 
 RUN git clone https://github.com/c9/core.git ./cloud9 \
 &&  cd cloud9/ && scripts/install-sdk.sh \
-&&  npm i \
 &&  sed -i -e 's_127.0.0.1_0.0.0.0_g' configs/standalone.js
 
 RUN git clone https://github.com/AquestTechnologies/Aquest.git ./aquest \
@@ -49,6 +51,6 @@ RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 ADD ./config/* /etc/supervisor/conf.d/
 
-EXPOSE 80 81 82 83 8080 29015 28015
+EXPOSE 80 81 3000 8080 9090 29015 28015
 
 CMD ["supervisord", "-c", "/etc/supervisor/supervisord.conf"]
