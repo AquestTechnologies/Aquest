@@ -2,5 +2,4 @@ node_modules
 .c9
 temp
 config/dev_local.js
-config/dev_aws.js
 *.log*

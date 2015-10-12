@@ -20,7 +20,9 @@ export default function prerender(request, reply) {
   const d = new Date();
   const response = reply.response().hold();
   
-  const checkCookie = typeof request.state.jwt === 'string' ? // If there is a JWT in the cookie, we verify it
+  // If there is a JWT in the cookie, we verify it
+  const checkCookie = typeof request.state.jwt !== 'string' ?
+    Promise.resolve({}) : // No cookie, no problem
     new Promise((resolve, reject) => JWT.verify(request.state.jwt, key, (err, {userId, expiration}) => {
       if (err) return reject(err);
       
@@ -32,8 +34,8 @@ export default function prerender(request, reply) {
         response.state('jwt', JWT.sign(session, key), {ttl, path: '/'}); // Adds a renewed cookie to the reponse. Note: somehow, path: '/' is important
         resolve({session});
       }
-    })) :
-    Promise.resolve({}); // No cookie, no problem
+    }));
+    
   // First we scan the request for a cookie to renew
   checkCookie.then(reduxState => {
     
@@ -46,6 +48,7 @@ export default function prerender(request, reply) {
     const requestUrl = request.url.path.split('?')[0];
     const url = requestUrl.slice(-1) === '/' && requestUrl !== '/' ? requestUrl.slice(0, -1) : requestUrl;
     const location = createLocation(url);
+    
     match({ routes, location }, (err, redirectLocation, renderProps) => {
       log('... Matching routes with url');
       if (err) {

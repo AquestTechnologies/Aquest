@@ -1,10 +1,12 @@
 import AWS from 'aws-sdk';
-import { accessKeyId, secretAccessKey, imageBucketName, cloudFrontDomainName } from '../../../config/dev_aws';
-
+import { imageBucketName, cloudFrontDomainName } from '../../../config/dev_aws';
 
 // This is sooooo unsecure, before prod we need to use something more recommended
 // http://docs.aws.amazon.com/AWSJavaScriptSDK/guide/node-configuring.html
-AWS.config.update({accessKeyId, secretAccessKey});
+AWS.config.update({
+  accessKeyId,
+  secretAccessKey
+});
 
 export function uploadStreamToS3(localStream, Key, ACL) {
   
