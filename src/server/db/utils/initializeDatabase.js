@@ -1,4 +1,5 @@
 import r from 'rethinkdb';
+import deleteDatabase from './deleteDatabase';
 import populateDatabase from './populateDatabase';
 import log from '../../../shared/utils/logTailor';
 import dbOptions from '../../../../config/dev_rethinkdb';
@@ -6,10 +7,12 @@ import chainPromises from '../../../shared/utils/chainPromises';
 
 const tables = ['users', 'universes', 'topics', 'chats', 'messages', 'ballots', 'votes', 'images'];
 
-export default function initializeDatabase() {
+export default function initializeDatabase(drop) {
   log('... Initializing database');
   
-  return new Promise((resolve, reject) => {
+  return drop ? 
+  chainPromises([deleteDatabase, initializeDatabase]) :
+  new Promise((resolve, reject) => {
     
     r.connect(dbOptions, (err, conn) => {
       if (err) return reject(err);

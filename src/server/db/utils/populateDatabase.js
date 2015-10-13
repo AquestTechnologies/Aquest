@@ -8,19 +8,22 @@ export default function populateDatabase(conn) {
   
   return new Promise((resolve, reject) => {
     
+    const creationIp = '0.0.0.0';
+    
     const defaultUser = { // has no image
+      creationIp,
       pseudo: 'admin',
       email: 'admin@aquest.tech',
       fullName: 'Super Admin',
       passwordHash: '$2a$10$m3jpaE2uelYFzoPTu/fG/eU5rTkmL0d8ph.eF3uQrdQE46UbhhpdW',
-      creationIp: '192.168.0.1',
     };
     
     const defaultUniverse = {
+      creationIp,
       name: 'Meta Aquest',
       description: 'Aquest is intriguing, right?',
       rules: 'Be nice please.',
-      creationIp: '192.168.0.1',
+      relatedUniverses: [],
     };
     
     const defaultBallots = [
@@ -72,7 +75,11 @@ export default function populateDatabase(conn) {
               
               log('... Default images:');
               
-              Promise.all(files.map(file => processImage(fs.createReadStream(path + file)))).then(
+              Promise.all(files.map(file => new Promise((resolve, reject) =>
+                processImage(fs.createReadStream(path + file)).then(({ name, url }) => 
+                  queryDatabase('createImage', { url, name, userId, creationIp }).then(resolve, reject)
+                )
+              ))).then(
                 data => {
                   
                   log('... Default universe:');

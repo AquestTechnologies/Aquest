@@ -2,10 +2,7 @@ import Hapi from 'hapi';
 import prerender from './prerender';
 import devConfig from '../../config/dev_server';
 import { createActivists } from './activityGenerator';
-import deleteDatabase from './db/utils/deleteDatabase';
-import importDefaults from './db/utils/importDefaults';
 import initializeDatabase from './db/utils/initializeDatabase';
-import chainPromises from '../shared/utils/chainPromises';
 import log, { logError, logRequest, logAuthentication } from '../shared/utils/logTailor';
 
 process.env.NODE_ENV = process.env.NODE_ENV || 'development';
@@ -87,8 +84,7 @@ server.start(() => {
     '          |_|'
   );
   
-  // chainPromises([initializeDatabase, importDefaults]).then(
-  chainPromises([deleteDatabase, initializeDatabase, importDefaults]).then(
+  initializeDatabase(1).then(
     () => {
       log('... App ready!');
       

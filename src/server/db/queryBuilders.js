@@ -1,9 +1,8 @@
 import r from 'rethinkdb';
 import log from '../../shared/utils/logTailor';
-import appConfig from '../../../config/dev_app';
+import { topicsLoadLimit, messagesLoadLimit, universesLoadLimit } from '../../../config/dev_app';
 
 const table = r.table;
-const { topicsLoadLimit, messagesLoadLimit, universesLoadLimit, defaultBallots } = appConfig;
 
 /* Shared functions among builders */
 
@@ -143,36 +142,38 @@ export default run => ({
   
   // CREATE UNIVERSE
   createUniverse: ({ userId, imageId, name, description, rules, relatedUniverses, creationIp }) => new Promise((resolve, reject) => {
+    const handle = createHandleFrom(name);
+    const newBallot = { 
+      userId,
+      value: 1,
+      content: name,
+      description: 'Accurate', // ?
+    };
     
-    run(
-      table('universes')
-      .insert(prepareInsertion({ 
-        userId, imageId, name, description, rules, relatedUniverses, creationIp,
-        handle: createHandleFrom(name),
-      }))
-    ).then(
-      result => {
-        const id = result.generated_keys[0];
-        const newBallot = { 
-          userId,
-          value: 1,
-          content: name,
-          description: 'Accurate', // ?
-        };
-        
-        Promise.all([
-          run(createChat(name + ' Agora', id)),
-          run(table('ballots').insert(prepareInsertion(newBallot)))
-        ]).then(
-          ([r1, r2]) => resolve({ // imageUrl is missing, delegated to client.
-            id, name, description, rules, relatedUniverses, 
-            ballots: defaultBallots.concat([Object.assign(newBallot, { 
-              id: r2.generated_keys[0]
-            })]) 
-          }), 
-          reject 
-        );
-      },
+    Promise.all([
+      run(table('ballots').orderBy('createdAt').limit(5).without('createdAt', 'updatedAt', 'userId')),
+      run(table('ballots').insert(prepareInsertion(newBallot))),
+    ])
+    .then(
+      ([r1, r2]) => run(table('universes').insert(prepareInsertion({ 
+        userId, imageId, name, description, rules, relatedUniverses, creationIp, handle,
+        relatedBallots: r1.map(b => b.id).concat([r2.generated_keys[0]])
+      })))
+      .then(
+        r3 => {
+          const id = r3.generated_keys[0];
+          run(createChat(name + ' Agora', id))
+          .then(
+            () => resolve({
+              // imageUrl is missing, delegated to client.
+              id, name, description, rules, relatedUniverses, handle,
+              ballots: [r2.generated_keys[0]].concat(r1),
+            }), 
+            reject
+          );
+        },
+        reject
+      ),
       reject
     );
   }),

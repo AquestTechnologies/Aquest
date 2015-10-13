@@ -3,10 +3,10 @@ import { imageBucketName, cloudFrontDomainName } from '../../../config/dev_aws';
 
 // This is sooooo unsecure, before prod we need to use something more recommended
 // http://docs.aws.amazon.com/AWSJavaScriptSDK/guide/node-configuring.html
-AWS.config.update({
-  accessKeyId,
-  secretAccessKey
-});
+// AWS.config.update({
+//   accessKeyId,
+//   secretAccessKey,
+// });
 
 export function uploadStreamToS3(localStream, Key, ACL) {
   
@@ -19,6 +19,6 @@ export function uploadStreamToS3(localStream, Key, ACL) {
       Bucket: imageBucketName,
     })
     // .on('httpUploadProgress', e => log('Uploading stream to S3...', Math.round(100 * e.loaded / e.total) + '%'))
-    .send((err, data) => err ? reject(err) : resolve(cloudFrontDomainName + Key));
+    .send((err, data) => err ? reject(err) : resolve(`http://${cloudFrontDomainName}/${Key}`));
   });
 }

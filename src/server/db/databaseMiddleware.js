@@ -35,6 +35,8 @@ export default function queryDatabase(intention, params) {
     const query = runQuery(params);
     query.then(() => log(`+++ <-- ${intention} after ${new Date() - d}ms`));
     
+    // log ('+++ ', intention, params)
+    
     return query;
   }
   else return Promise.reject(`No query builder found for your intention: ${intention}`);
